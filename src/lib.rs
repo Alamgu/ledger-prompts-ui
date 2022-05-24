@@ -104,7 +104,7 @@ impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError
             panic!("Page count too large: {}", page_count);
         }
         let title_label = LabelLine::new().pos(0, 10).text(self.title);
-        let label = LabelLine::new().pos(0,25); 
+        let label = LabelLine::new().pos(0,25);
         let mut cur_page = 0;
 
         // A closure to draw common elements of the screen
@@ -143,7 +143,7 @@ impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError
                     }
                     // We need to draw anyway to clear button press arrow
                     draw(cur_page)?;
-                }    
+                }
                 Some(ButtonEvent::RightButtonRelease) => {
                     if cur_page < page_count {
                         cur_page += 1;
