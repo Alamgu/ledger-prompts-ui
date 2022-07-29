@@ -1,5 +1,6 @@
 #![no_std]
-#![feature(try_trait)]
+#![feature(cfg_version)]
+#![cfg_attr(not(version("1.61")), feature(try_trait))]
 
 use nanos_sdk::buttons::{ButtonsState, ButtonEvent};
 use nanos_ui::bagls::*;
@@ -55,6 +56,8 @@ impl From<core::str::Utf8Error> for ScrollerError {
         ScrollerError
     }
 }
+
+#[cfg(not(version("1.61")))]
 impl From<core::option::NoneError> for ScrollerError {
     fn from(_: core::option::NoneError) -> Self {
         ScrollerError
