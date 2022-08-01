@@ -74,6 +74,16 @@ pub fn write_scroller< F: for <'b> Fn(&mut PromptWrite<'b, 16>) -> Result<(), Sc
     }
 }
 
+#[inline(never)]
+pub fn write_scroller_three_rows< F: for <'b> Fn(&mut PromptWrite<'b, 16>) -> Result<(), ScrollerError> > (title: &str, prompt_function: F) -> Option<()> {
+    if !WriteScroller::<_, 16>::new(title, prompt_function).ask_three_rows() {
+        trace!("User rejected prompt");
+        None
+    } else {
+        Some(())
+    }
+}
+
 pub struct WriteScroller<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError>, const CHAR_N: usize> {
     title: &'a str,
     contents: F
@@ -123,6 +133,96 @@ impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError
             title_label.display();
             label.text(buffer.as_str()).paint();
             trace!("Prompting with ({} of {}) {}: {}", page, page_count, self.title, buffer);
+            if page > 0 {
+                LEFT_ARROW.paint();
+            }
+            if page + 1 < page_count {
+                RIGHT_ARROW.paint();
+            } else {
+                RIGHT_CHECK.paint();
+            }
+            Ok(())
+        };
+
+        draw(cur_page)?;
+
+        loop {
+            match get_event(&mut buttons) {
+                Some(ButtonEvent::LeftButtonPress) => {
+                    LEFT_S_ARROW.paint();
+                }
+                Some(ButtonEvent::RightButtonPress) => {
+                    RIGHT_S_ARROW.paint();
+                }
+                Some(ButtonEvent::LeftButtonRelease) => {
+                    if cur_page > 0 {
+                        cur_page -= 1;
+                    }
+                    // We need to draw anyway to clear button press arrow
+                    draw(cur_page)?;
+                }
+                Some(ButtonEvent::RightButtonRelease) => {
+                    if cur_page < page_count {
+                        cur_page += 1;
+                    }
+                    if cur_page == page_count {
+                        break Ok(true);
+                    }
+                    // We need to draw anyway to clear button press arrow
+                    draw(cur_page)?;
+                }
+                Some(ButtonEvent::BothButtonsRelease) => break Ok(false),
+                Some(_) | None => ()
+            }
+        }
+    }
+
+    pub fn ask_three_rows(&self) -> bool {
+        self.ask_three_rows_err().unwrap_or(false)
+    }
+
+    pub fn ask_three_rows_err(&self) -> Result<bool, ScrollerError> {
+        let mut buttons = ButtonsState::new();
+        let content_len = core::cmp::max(1, self.get_length()?);
+        let page_count = (content_len - 1) / (CHAR_N * 3) + 1;
+        if page_count == 0 {
+            return Ok(true);
+        }
+        if page_count > 1000 {
+            trace!("Page count too large: {}", page_count);
+            panic!("Page count too large: {}", page_count);
+        }
+        let title_label = LabelLine::new().pos(0, 10).text(self.title);
+        let label = LabelLine::new().pos(0,25);
+        let label2 = LabelLine::new().pos(0, 40);
+        let label3 = LabelLine::new().pos(0, 55);
+        let mut cur_page = 0;
+
+        // A closure to draw common elements of the screen
+        // cur_page passed as parameter to prevent borrowing
+        let draw = |page: usize| -> Result<(), ScrollerError> {
+            title_label.display();
+            {
+                let offset = (3 * page) * CHAR_N;
+                let mut buffer = ArrayString::new();
+                (self.contents)(&mut PromptWrite{ offset, buffer: &mut buffer, total: 0 })?;
+                label.text(buffer.as_str()).paint();
+                trace!("Prompting row 1 ({} of {}) {}: {}", page, page_count, self.title, buffer);
+            }
+            if content_len > ((3 * page) + 1) * CHAR_N {
+                let offset = ((3 * page) + 1) * CHAR_N;
+                let mut buffer = ArrayString::new();
+                (self.contents)(&mut PromptWrite{ offset, buffer: &mut buffer, total: 0 })?;
+                label2.text(buffer.as_str()).paint();
+                trace!("Prompting row 2 ({} of {}) {}: {}", page, page_count, self.title, buffer);
+            }
+            if content_len > ((3 * page) + 2) * CHAR_N {
+                let offset = ((3 * page) + 2) * CHAR_N;
+                let mut buffer = ArrayString::new();
+                (self.contents)(&mut PromptWrite{ offset, buffer: &mut buffer, total: 0 })?;
+                label3.text(buffer.as_str()).paint();
+                trace!("Prompting row 3 ({} of {}) {}: {}", page, page_count, self.title, buffer);
+            }
             if page > 0 {
                 LEFT_ARROW.paint();
             }
