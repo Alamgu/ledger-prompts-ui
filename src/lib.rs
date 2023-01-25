@@ -2,22 +2,26 @@
 #![feature(cfg_version)]
 #![cfg_attr(not(version("1.56")), feature(try_trait))]
 
-use nanos_sdk::buttons::{ButtonsState, ButtonEvent};
-use nanos_ui::bagls::*;
-use nanos_ui::ui::{get_event, MessageValidator, SingleMessage};
 use arrayvec::ArrayString;
 use core::fmt::Write;
 use ledger_log::trace;
+use nanos_sdk::buttons::{ButtonEvent, ButtonsState};
+use nanos_ui::bagls::*;
+use nanos_ui::ui::{get_event, MessageValidator, SingleMessage};
 
 #[derive(Debug)]
 pub struct PromptWrite<'a, const N: usize> {
     offset: usize,
     buffer: &'a mut ArrayString<N>,
-    total: usize
+    total: usize,
 }
 
 pub fn mk_prompt_write<'a, const N: usize>(buffer: &'a mut ArrayString<N>) -> PromptWrite<'a, N> {
-    PromptWrite{ offset: 0, buffer: buffer, total: 0 }
+    PromptWrite {
+        offset: 0,
+        buffer: buffer,
+        total: 0,
+    }
 }
 
 impl<'a, const N: usize> Write for PromptWrite<'a, N> {
@@ -28,9 +32,13 @@ impl<'a, const N: usize> Write for PromptWrite<'a, N> {
         if self.offset > 0 {
             return Ok(());
         }
-        let rv = self.buffer.try_push_str(
-            &s[offset_in_s .. core::cmp::min(s.len(), offset_in_s + self.buffer.remaining_capacity())]
-        ).map_err(|_| core::fmt::Error);
+        let rv = self
+            .buffer
+            .try_push_str(
+                &s[offset_in_s
+                    ..core::cmp::min(s.len(), offset_in_s + self.buffer.remaining_capacity())],
+            )
+            .map_err(|_| core::fmt::Error);
         rv
     }
 }
@@ -65,7 +73,10 @@ impl From<core::option::NoneError> for ScrollerError {
 }
 
 #[inline(never)]
-pub fn write_scroller< F: for <'b> Fn(&mut PromptWrite<'b, 16>) -> Result<(), ScrollerError> > (title: &str, prompt_function: F) -> Option<()> {
+pub fn write_scroller<F: for<'b> Fn(&mut PromptWrite<'b, 16>) -> Result<(), ScrollerError>>(
+    title: &str,
+    prompt_function: F,
+) -> Option<()> {
     if !WriteScroller::<_, 16>::new(title, prompt_function).ask() {
         trace!("User rejected prompt");
         None
@@ -75,7 +86,12 @@ pub fn write_scroller< F: for <'b> Fn(&mut PromptWrite<'b, 16>) -> Result<(), Sc
 }
 
 #[inline(never)]
-pub fn write_scroller_three_rows< F: for <'b> Fn(&mut PromptWrite<'b, 16>) -> Result<(), ScrollerError> > (title: &str, prompt_function: F) -> Option<()> {
+pub fn write_scroller_three_rows<
+    F: for<'b> Fn(&mut PromptWrite<'b, 16>) -> Result<(), ScrollerError>,
+>(
+    title: &str,
+    prompt_function: F,
+) -> Option<()> {
     if !WriteScroller::<_, 16>::new(title, prompt_function).ask_three_rows() {
         trace!("User rejected prompt");
         None
@@ -84,22 +100,34 @@ pub fn write_scroller_three_rows< F: for <'b> Fn(&mut PromptWrite<'b, 16>) -> Re
     }
 }
 
-pub struct WriteScroller<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError>, const CHAR_N: usize> {
+pub struct WriteScroller<
+    'a,
+    F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError>,
+    const CHAR_N: usize,
+> {
     title: &'a str,
-    contents: F
+    contents: F,
 }
 
-const RIGHT_CHECK : Icon = Icon::new(Icons::Check).pos(120,12);
+const RIGHT_CHECK: Icon = Icon::new(Icons::Check).pos(120, 12);
 
-impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError>, const CHAR_N: usize> WriteScroller<'a, F, CHAR_N> {
-
+impl<
+        'a,
+        F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError>,
+        const CHAR_N: usize,
+    > WriteScroller<'a, F, CHAR_N>
+{
     pub fn new(title: &'a str, contents: F) -> Self {
         WriteScroller { title, contents }
     }
 
     fn get_length(&self) -> Result<usize, ScrollerError> {
         let mut buffer = ArrayString::new();
-        let mut prompt_write = PromptWrite{ offset: 0, buffer: &mut buffer, total: 0 };
+        let mut prompt_write = PromptWrite {
+            offset: 0,
+            buffer: &mut buffer,
+            total: 0,
+        };
         (self.contents)(&mut prompt_write)?;
         let length = prompt_write.total;
         trace!("Prompt length: {}", length);
@@ -112,7 +140,7 @@ impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError
 
     pub fn ask_err(&self) -> Result<bool, ScrollerError> {
         let mut buttons = ButtonsState::new();
-        let page_count = (core::cmp::max(1, self.get_length()?)-1) / CHAR_N + 1;
+        let page_count = (core::cmp::max(1, self.get_length()?) - 1) / CHAR_N + 1;
         if page_count == 0 {
             return Ok(true);
         }
@@ -121,7 +149,7 @@ impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError
             panic!("Page count too large: {}", page_count);
         }
         let title_label = LabelLine::new().pos(0, 10).text(self.title);
-        let label = LabelLine::new().pos(0,25);
+        let label = LabelLine::new().pos(0, 25);
         let mut cur_page = 0;
 
         // A closure to draw common elements of the screen
@@ -129,10 +157,20 @@ impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError
         let draw = |page: usize| -> Result<(), ScrollerError> {
             let offset = page * CHAR_N;
             let mut buffer = ArrayString::new();
-            (self.contents)(&mut PromptWrite{ offset, buffer: &mut buffer, total: 0 })?;
+            (self.contents)(&mut PromptWrite {
+                offset,
+                buffer: &mut buffer,
+                total: 0,
+            })?;
             title_label.display();
             label.text(buffer.as_str()).paint();
-            trace!("Prompting with ({} of {}) {}: {}", page, page_count, self.title, buffer);
+            trace!(
+                "Prompting with ({} of {}) {}: {}",
+                page,
+                page_count,
+                self.title,
+                buffer
+            );
             if page > 0 {
                 LEFT_ARROW.paint();
             }
@@ -172,7 +210,7 @@ impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError
                     draw(cur_page)?;
                 }
                 Some(ButtonEvent::BothButtonsRelease) => break Ok(false),
-                Some(_) | None => ()
+                Some(_) | None => (),
             }
         }
     }
@@ -193,7 +231,7 @@ impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError
             panic!("Page count too large: {}", page_count);
         }
         let title_label = LabelLine::new().pos(0, 10).text(self.title);
-        let label = LabelLine::new().pos(0,25);
+        let label = LabelLine::new().pos(0, 25);
         let label2 = LabelLine::new().pos(0, 40);
         let label3 = LabelLine::new().pos(0, 55);
         let mut cur_page = 0;
@@ -205,23 +243,53 @@ impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError
             {
                 let offset = (3 * page) * CHAR_N;
                 let mut buffer = ArrayString::new();
-                (self.contents)(&mut PromptWrite{ offset, buffer: &mut buffer, total: 0 })?;
+                (self.contents)(&mut PromptWrite {
+                    offset,
+                    buffer: &mut buffer,
+                    total: 0,
+                })?;
                 label.text(buffer.as_str()).paint();
-                trace!("Prompting row 1 ({} of {}) {}: {}", page, page_count, self.title, buffer);
+                trace!(
+                    "Prompting row 1 ({} of {}) {}: {}",
+                    page,
+                    page_count,
+                    self.title,
+                    buffer
+                );
             }
             if content_len > ((3 * page) + 1) * CHAR_N {
                 let offset = ((3 * page) + 1) * CHAR_N;
                 let mut buffer = ArrayString::new();
-                (self.contents)(&mut PromptWrite{ offset, buffer: &mut buffer, total: 0 })?;
+                (self.contents)(&mut PromptWrite {
+                    offset,
+                    buffer: &mut buffer,
+                    total: 0,
+                })?;
                 label2.text(buffer.as_str()).paint();
-                trace!("Prompting row 2 ({} of {}) {}: {}", page, page_count, self.title, buffer);
+                trace!(
+                    "Prompting row 2 ({} of {}) {}: {}",
+                    page,
+                    page_count,
+                    self.title,
+                    buffer
+                );
             }
             if content_len > ((3 * page) + 2) * CHAR_N {
                 let offset = ((3 * page) + 2) * CHAR_N;
                 let mut buffer = ArrayString::new();
-                (self.contents)(&mut PromptWrite{ offset, buffer: &mut buffer, total: 0 })?;
+                (self.contents)(&mut PromptWrite {
+                    offset,
+                    buffer: &mut buffer,
+                    total: 0,
+                })?;
                 label3.text(buffer.as_str()).paint();
-                trace!("Prompting row 3 ({} of {}) {}: {}", page, page_count, self.title, buffer);
+                trace!(
+                    "Prompting row 3 ({} of {}) {}: {}",
+                    page,
+                    page_count,
+                    self.title,
+                    buffer
+                );
             }
             if page > 0 {
                 LEFT_ARROW.paint();
@@ -262,7 +330,7 @@ impl<'a, F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError
                     draw(cur_page)?;
                 }
                 Some(ButtonEvent::BothButtonsRelease) => break Ok(false),
-                Some(_) | None => ()
+                Some(_) | None => (),
             }
         }
     }
@@ -275,10 +343,7 @@ pub struct RootMenu<'a, const N: usize> {
 
 impl<'a, const N: usize> RootMenu<'a, N> {
     pub fn new(screens: [&'a str; N]) -> RootMenu<'a, N> {
-        RootMenu {
-            screens,
-            state: 0
-        }
+        RootMenu { screens, state: 0 }
     }
 
     #[inline(never)]
@@ -289,8 +354,10 @@ impl<'a, const N: usize> RootMenu<'a, N> {
     #[inline(never)]
     pub fn update(&mut self, btn: ButtonEvent) -> Option<usize> {
         match btn {
-            ButtonEvent::LeftButtonRelease => self.state = if self.state > 0 { self.state - 1 } else {0},
-            ButtonEvent::RightButtonRelease => self.state = core::cmp::min(self.state+1, N-1),
+            ButtonEvent::LeftButtonRelease => {
+                self.state = if self.state > 0 { self.state - 1 } else { 0 }
+            }
+            ButtonEvent::RightButtonRelease => self.state = core::cmp::min(self.state + 1, N - 1),
             ButtonEvent::BothButtonsRelease => return Some(self.state),
             _ => (),
         }
