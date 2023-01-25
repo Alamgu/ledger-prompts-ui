@@ -9,6 +9,12 @@ nanos_sdk = { git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git" }
 nanos_ui = { git = "https://github.com/LedgerHQ/ledger-nanos-ui.git" }
 ledger-log = { git = "https://github.com/alamgu/ledger-log.git" }
 
-
 [features]
 speculos = ["nanos_sdk/speculos"]
+
+[patch."https://github.com/LedgerHQ/ledger-nanos-sdk.git".nanos_sdk]
+git = "https://github.com/alamgu/ledger-nanos-sdk.git"
+branch = "support-nix-or-non-nix-toolchain"
+[patch."https://github.com/LedgerHQ/ledger-nanos-ui.git".nanos_ui]
+git = "https://github.com/obsidiansystems/ledger-nanos-ui"
+branch = "use-lib-bagl-for-x-and-splus"
