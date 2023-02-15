@@ -165,7 +165,10 @@ impl<
 
             if show_index {
                 let title_buffer = self.make_title_buffer(page, page_count);
-                LabelLine::new().pos(0, 10).text(title_buffer.as_str()).display()
+                LabelLine::new()
+                    .pos(0, 10)
+                    .text(title_buffer.as_str())
+                    .display()
             } else {
                 LabelLine::new().pos(0, 10).text(self.title).display()
             };
@@ -247,7 +250,10 @@ impl<
         let draw = |page: usize| -> Result<(), ScrollerError> {
             if show_index {
                 let title_buffer = self.make_title_buffer(page, page_count);
-                LabelLine::new().pos(0, 10).text(title_buffer.as_str()).display()
+                LabelLine::new()
+                    .pos(0, 10)
+                    .text(title_buffer.as_str())
+                    .display()
             } else {
                 LabelLine::new().pos(0, 10).text(self.title).display()
             };
@@ -358,9 +364,14 @@ impl<
         };
 
         title_buffer.push_str(self.title);
-        if  page_count > 1 && self.title.len() <= (16 - len_needed) {
+        if page_count > 1 && self.title.len() <= (16 - len_needed) {
             // We have checked that the following will succeed, so ignore result
-            let _ = write!(mk_prompt_write(&mut title_buffer), " ({}/{})", page + 1, page_count);
+            let _ = write!(
+                mk_prompt_write(&mut title_buffer),
+                " ({}/{})",
+                page + 1,
+                page_count
+            );
         }
         title_buffer
     }
