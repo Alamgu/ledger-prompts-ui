@@ -74,10 +74,11 @@ impl From<core::option::NoneError> for ScrollerError {
 
 #[inline(never)]
 pub fn write_scroller<F: for<'b> Fn(&mut PromptWrite<'b, 16>) -> Result<(), ScrollerError>>(
+    show_index: bool,
     title: &str,
     prompt_function: F,
 ) -> Option<()> {
-    if !WriteScroller::<_, 16>::new(title, prompt_function).ask() {
+    if !WriteScroller::<_, 16>::new(title, prompt_function).ask(show_index) {
         trace!("User rejected prompt");
         None
     } else {
@@ -89,10 +90,11 @@ pub fn write_scroller<F: for<'b> Fn(&mut PromptWrite<'b, 16>) -> Result<(), Scro
 pub fn write_scroller_three_rows<
     F: for<'b> Fn(&mut PromptWrite<'b, 16>) -> Result<(), ScrollerError>,
 >(
+    show_index: bool,
     title: &str,
     prompt_function: F,
 ) -> Option<()> {
-    if !WriteScroller::<_, 16>::new(title, prompt_function).ask_three_rows() {
+    if !WriteScroller::<_, 16>::new(title, prompt_function).ask_three_rows(show_index) {
         trace!("User rejected prompt");
         None
     } else {
@@ -134,11 +136,11 @@ impl<
         Ok(length)
     }
 
-    pub fn ask(&self) -> bool {
-        self.ask_err().unwrap_or(false)
+    pub fn ask(&self, show_index: bool) -> bool {
+        self.ask_err(show_index).unwrap_or(false)
     }
 
-    pub fn ask_err(&self) -> Result<bool, ScrollerError> {
+    pub fn ask_err(&self, show_index: bool) -> Result<bool, ScrollerError> {
         let mut buttons = ButtonsState::new();
         let page_count = (core::cmp::max(1, self.get_length()?) - 1) / CHAR_N + 1;
         if page_count == 0 {
@@ -148,8 +150,6 @@ impl<
             trace!("Page count too large: {}", page_count);
             panic!("Page count too large: {}", page_count);
         }
-        let title_label = LabelLine::new().pos(0, 10).text(self.title);
-        let label = LabelLine::new().pos(0, 25);
         let mut cur_page = 0;
 
         // A closure to draw common elements of the screen
@@ -162,7 +162,17 @@ impl<
                 buffer: &mut buffer,
                 total: 0,
             })?;
-            title_label.display();
+
+            if show_index {
+                let title_buffer = self.make_title_buffer(page, page_count);
+                LabelLine::new()
+                    .pos(0, 10)
+                    .text(title_buffer.as_str())
+                    .display()
+            } else {
+                LabelLine::new().pos(0, 10).text(self.title).display()
+            };
+            let label = LabelLine::new().pos(0, 25);
             label.text(buffer.as_str()).paint();
             trace!(
                 "Prompting with ({} of {}) {}: {}",
@@ -215,11 +225,11 @@ impl<
         }
     }
 
-    pub fn ask_three_rows(&self) -> bool {
-        self.ask_three_rows_err().unwrap_or(false)
+    pub fn ask_three_rows(&self, show_index: bool) -> bool {
+        self.ask_three_rows_err(show_index).unwrap_or(false)
     }
 
-    pub fn ask_three_rows_err(&self) -> Result<bool, ScrollerError> {
+    pub fn ask_three_rows_err(&self, show_index: bool) -> Result<bool, ScrollerError> {
         let mut buttons = ButtonsState::new();
         let content_len = core::cmp::max(1, self.get_length()?);
         let page_count = (content_len - 1) / (CHAR_N * 3) + 1;
@@ -230,7 +240,6 @@ impl<
             trace!("Page count too large: {}", page_count);
             panic!("Page count too large: {}", page_count);
         }
-        let title_label = LabelLine::new().pos(0, 10).text(self.title);
         let label = LabelLine::new().pos(0, 25);
         let label2 = LabelLine::new().pos(0, 40);
         let label3 = LabelLine::new().pos(0, 55);
@@ -239,7 +248,15 @@ impl<
         // A closure to draw common elements of the screen
         // cur_page passed as parameter to prevent borrowing
         let draw = |page: usize| -> Result<(), ScrollerError> {
-            title_label.display();
+            if show_index {
+                let title_buffer = self.make_title_buffer(page, page_count);
+                LabelLine::new()
+                    .pos(0, 10)
+                    .text(title_buffer.as_str())
+                    .display()
+            } else {
+                LabelLine::new().pos(0, 10).text(self.title).display()
+            };
             {
                 let offset = (3 * page) * CHAR_N;
                 let mut buffer = ArrayString::new();
@@ -333,6 +350,30 @@ impl<
                 Some(_) | None => (),
             }
         }
+    }
+
+    fn make_title_buffer(&self, page: usize, page_count: usize) -> ArrayString<16> {
+        let mut title_buffer: ArrayString<16> = ArrayString::new();
+        // Number of chars needed to show " (x/y)"
+        let len_needed = 4 + if page_count < 10 {
+            2
+        } else if page_count < 100 {
+            4
+        } else {
+            6
+        };
+
+        title_buffer.push_str(self.title);
+        if page_count > 1 && self.title.len() <= (16 - len_needed) {
+            // We have checked that the following will succeed, so ignore result
+            let _ = write!(
+                mk_prompt_write(&mut title_buffer),
+                " ({}/{})",
+                page + 1,
+                page_count
+            );
+        }
+        title_buffer
     }
 }
 
