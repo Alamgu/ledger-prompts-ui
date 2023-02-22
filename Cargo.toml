@@ -8,6 +8,7 @@ arrayvec = { version = "0.7.1", default-features = false }
 nanos_sdk = { git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git" }
 nanos_ui = { git = "https://github.com/LedgerHQ/ledger-nanos-ui.git" }
 ledger-log = { git = "https://github.com/alamgu/ledger-log.git" }
+include_gif = { git = "https://github.com/LedgerHQ/sdk_include_gif" }
 
 [features]
 speculos = ["nanos_sdk/speculos"]
