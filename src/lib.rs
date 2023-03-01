@@ -117,6 +117,11 @@ pub struct WriteScroller<
 #[cfg(target_os = "nanos")]
 const RIGHT_CHECK: Icon = Icon::new(Icons::Check).pos(120, 12);
 
+#[cfg(not(target_os = "nanos"))]
+const CHECK_ICON: Icon = Icon::from(&bitmaps::CHECK_GLYPH);
+#[cfg(not(target_os = "nanos"))]
+const RIGHT_CHECK: Icon = CHECK_ICON.shift_h(120);
+
 impl<
         'a,
         F: for<'b> Fn(&mut PromptWrite<'b, CHAR_N>) -> Result<(), ScrollerError>,
@@ -156,10 +161,6 @@ impl<
         }
         let mut cur_page = 0;
 
-        #[cfg(not(target_os = "nanos"))]
-        let CHECK_ICON: Icon = Icon::from(&bitmaps::CHECK_GLYPH);
-        #[cfg(not(target_os = "nanos"))]
-        let RIGHT_CHECK: Icon = CHECK_ICON.shift_h(120);
         // A closure to draw common elements of the screen
         // cur_page passed as parameter to prevent borrowing
         let draw = |page: usize| -> Result<(), ScrollerError> {
@@ -250,10 +251,6 @@ impl<
         }
         let mut cur_page = 0;
 
-        #[cfg(not(target_os = "nanos"))]
-        let CHECK_ICON: Icon = Icon::from(&bitmaps::CHECK_GLYPH);
-        #[cfg(not(target_os = "nanos"))]
-        let RIGHT_CHECK: Icon = CHECK_ICON.shift_h(120);
         // A closure to draw common elements of the screen
         // cur_page passed as parameter to prevent borrowing
         let draw = |page: usize| -> Result<(), ScrollerError> {
