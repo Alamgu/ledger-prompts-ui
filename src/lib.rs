@@ -191,12 +191,12 @@ impl<
                 buffer
             );
             if page > 0 {
-                LEFT_ARROW.display();
+                LEFT_ARROW.instant_display();
             }
             if page + 1 < page_count {
-                RIGHT_ARROW.display();
+                RIGHT_ARROW.instant_display();
             } else {
-                RIGHT_CHECK.display();
+                RIGHT_CHECK.instant_display();
             }
             Ok(())
         };
@@ -206,10 +206,10 @@ impl<
         loop {
             match get_event(&mut buttons) {
                 Some(ButtonEvent::LeftButtonPress) => {
-                    LEFT_S_ARROW.display();
+                    LEFT_S_ARROW.instant_display();
                 }
                 Some(ButtonEvent::RightButtonPress) => {
-                    RIGHT_S_ARROW.display();
+                    RIGHT_S_ARROW.instant_display();
                 }
                 Some(ButtonEvent::LeftButtonRelease) => {
                     if cur_page > 0 {
