@@ -18,4 +18,4 @@ git = "https://github.com/alamgu/ledger-nanos-sdk.git"
 branch = "support-nix-or-non-nix-toolchain"
 [patch."https://github.com/LedgerHQ/ledger-nanos-ui.git".nanos_ui]
 git = "https://github.com/obsidiansystems/ledger-nanos-ui"
-branch = "use-lib-bagl-for-x-and-splus"
+branch = "dn-make-from-pub"
