@@ -7,8 +7,8 @@ use core::fmt::Write;
 use ledger_log::trace;
 use nanos_sdk::buttons::{ButtonEvent, ButtonsState};
 use nanos_ui::bagls::*;
-use nanos_ui::ui::{get_event, MessageValidator, SingleMessage, clear_screen};
 use nanos_ui::layout::*;
+use nanos_ui::ui::{clear_screen, get_event, MessageValidator, SingleMessage};
 
 pub mod bitmaps;
 
