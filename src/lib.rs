@@ -7,7 +7,10 @@ use core::fmt::Write;
 use ledger_log::trace;
 use nanos_sdk::buttons::{ButtonEvent, ButtonsState};
 use nanos_ui::bagls::*;
-use nanos_ui::ui::{get_event, MessageValidator, SingleMessage};
+use nanos_ui::layout::*;
+use nanos_ui::ui::{clear_screen, get_event, MessageValidator, SingleMessage};
+
+pub mod bitmaps;
 
 #[derive(Debug)]
 pub struct PromptWrite<'a, const N: usize> {
@@ -111,7 +114,13 @@ pub struct WriteScroller<
     contents: F,
 }
 
+#[cfg(target_os = "nanos")]
 const RIGHT_CHECK: Icon = Icon::new(Icons::Check).pos(120, 12);
+
+#[cfg(not(target_os = "nanos"))]
+const CHECK_ICON: Icon = Icon::from(&bitmaps::CHECK_GLYPH);
+#[cfg(not(target_os = "nanos"))]
+const RIGHT_CHECK: Icon = CHECK_ICON.shift_h(120);
 
 impl<
         'a,
@@ -155,6 +164,7 @@ impl<
         // A closure to draw common elements of the screen
         // cur_page passed as parameter to prevent borrowing
         let draw = |page: usize| -> Result<(), ScrollerError> {
+            clear_screen();
             let offset = page * CHAR_N;
             let mut buffer = ArrayString::new();
             (self.contents)(&mut PromptWrite {
@@ -165,15 +175,14 @@ impl<
 
             if show_index {
                 let title_buffer = self.make_title_buffer(page, page_count);
-                LabelLine::new()
-                    .pos(0, 10)
-                    .text(title_buffer.as_str())
-                    .display()
+                let title_label: Label = From::from(title_buffer.as_str());
+                title_label.location(Location::Top).display();
             } else {
-                LabelLine::new().pos(0, 10).text(self.title).display()
+                let title_label: Label = From::from(self.title);
+                title_label.location(Location::Top).display();
             };
-            let label = LabelLine::new().pos(0, 25);
-            label.text(buffer.as_str()).paint();
+            let label: Label = From::from(buffer.as_str());
+            label.location(Location::Custom(15)).display();
             trace!(
                 "Prompting with ({} of {}) {}: {}",
                 page,
@@ -182,12 +191,12 @@ impl<
                 buffer
             );
             if page > 0 {
-                LEFT_ARROW.paint();
+                LEFT_ARROW.instant_display();
             }
             if page + 1 < page_count {
-                RIGHT_ARROW.paint();
+                RIGHT_ARROW.instant_display();
             } else {
-                RIGHT_CHECK.paint();
+                RIGHT_CHECK.instant_display();
             }
             Ok(())
         };
@@ -197,10 +206,10 @@ impl<
         loop {
             match get_event(&mut buttons) {
                 Some(ButtonEvent::LeftButtonPress) => {
-                    LEFT_S_ARROW.paint();
+                    LEFT_S_ARROW.instant_display();
                 }
                 Some(ButtonEvent::RightButtonPress) => {
-                    RIGHT_S_ARROW.paint();
+                    RIGHT_S_ARROW.instant_display();
                 }
                 Some(ButtonEvent::LeftButtonRelease) => {
                     if cur_page > 0 {
@@ -240,22 +249,19 @@ impl<
             trace!("Page count too large: {}", page_count);
             panic!("Page count too large: {}", page_count);
         }
-        let label = LabelLine::new().pos(0, 25);
-        let label2 = LabelLine::new().pos(0, 40);
-        let label3 = LabelLine::new().pos(0, 55);
         let mut cur_page = 0;
 
         // A closure to draw common elements of the screen
         // cur_page passed as parameter to prevent borrowing
         let draw = |page: usize| -> Result<(), ScrollerError> {
+            clear_screen();
             if show_index {
                 let title_buffer = self.make_title_buffer(page, page_count);
-                LabelLine::new()
-                    .pos(0, 10)
-                    .text(title_buffer.as_str())
-                    .display()
+                let title_label: Label = From::from(title_buffer.as_str());
+                title_label.location(Location::Top).display();
             } else {
-                LabelLine::new().pos(0, 10).text(self.title).display()
+                let title_label: Label = From::from(self.title);
+                title_label.location(Location::Top).display();
             };
             {
                 let offset = (3 * page) * CHAR_N;
@@ -265,7 +271,8 @@ impl<
                     buffer: &mut buffer,
                     total: 0,
                 })?;
-                label.text(buffer.as_str()).paint();
+                let label: Label = From::from(buffer.as_str());
+                label.location(Location::Custom(16)).display();
                 trace!(
                     "Prompting row 1 ({} of {}) {}: {}",
                     page,
@@ -282,7 +289,8 @@ impl<
                     buffer: &mut buffer,
                     total: 0,
                 })?;
-                label2.text(buffer.as_str()).paint();
+                let label: Label = From::from(buffer.as_str());
+                label.location(Location::Custom(31)).display();
                 trace!(
                     "Prompting row 2 ({} of {}) {}: {}",
                     page,
@@ -299,7 +307,8 @@ impl<
                     buffer: &mut buffer,
                     total: 0,
                 })?;
-                label3.text(buffer.as_str()).paint();
+                let label: Label = From::from(buffer.as_str());
+                label.location(Location::Custom(46)).display();
                 trace!(
                     "Prompting row 3 ({} of {}) {}: {}",
                     page,
@@ -309,12 +318,12 @@ impl<
                 );
             }
             if page > 0 {
-                LEFT_ARROW.paint();
+                LEFT_ARROW.instant_display();
             }
             if page + 1 < page_count {
-                RIGHT_ARROW.paint();
+                RIGHT_ARROW.instant_display();
             } else {
-                RIGHT_CHECK.paint();
+                RIGHT_CHECK.instant_display();
             }
             Ok(())
         };
@@ -324,10 +333,10 @@ impl<
         loop {
             match get_event(&mut buttons) {
                 Some(ButtonEvent::LeftButtonPress) => {
-                    LEFT_S_ARROW.paint();
+                    LEFT_S_ARROW.instant_display();
                 }
                 Some(ButtonEvent::RightButtonPress) => {
-                    RIGHT_S_ARROW.paint();
+                    RIGHT_S_ARROW.instant_display();
                 }
                 Some(ButtonEvent::LeftButtonRelease) => {
                     if cur_page > 0 {
