@@ -386,31 +386,32 @@ impl<
     }
 }
 
-pub struct RootMenu<'a, const N: usize> {
-    screens: [&'a str; N],
-    state: usize,
+pub trait Menu {
+    type BothResult;
+    fn move_left(&mut self);
+    fn move_right(&mut self);
+    fn handle_both(&mut self) -> Option<Self::BothResult>;
+    fn label(&self) -> &str;
 }
 
-impl<'a, const N: usize> RootMenu<'a, N> {
-    pub fn new(screens: [&'a str; N]) -> RootMenu<'a, N> {
-        RootMenu { screens, state: 0 }
-    }
+#[inline(never)]
+pub fn show_menu<M: Menu>(menu: &M) {
+    SingleMessage::new(menu.label()).show();
+}
 
-    #[inline(never)]
-    pub fn show(&self) {
-        SingleMessage::new(self.screens[self.state]).show();
-    }
-
-    #[inline(never)]
-    pub fn update(&mut self, btn: ButtonEvent) -> Option<usize> {
-        match btn {
-            ButtonEvent::LeftButtonRelease => {
-                self.state = if self.state > 0 { self.state - 1 } else { 0 }
-            }
-            ButtonEvent::RightButtonRelease => self.state = core::cmp::min(self.state + 1, N - 1),
-            ButtonEvent::BothButtonsRelease => return Some(self.state),
-            _ => (),
+#[inline(never)]
+pub fn handle_menu_button_event<M: Menu>(menu: &mut M, btn: ButtonEvent) -> Option<<M as Menu>::BothResult> {
+    match btn {
+        ButtonEvent::LeftButtonRelease => {
+            menu.move_left();
         }
-        None
+        ButtonEvent::RightButtonRelease => {
+            menu.move_right();
+        }
+        ButtonEvent::BothButtonsRelease => {
+            return menu.handle_both()
+        },
+        _ => (),
     }
+    None
 }
