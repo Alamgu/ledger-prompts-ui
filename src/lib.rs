@@ -386,21 +386,78 @@ impl<
     }
 }
 
+// TODO: Fix nanos icons
+#[cfg(target_os = "nanos")]
+pub const BACK_ICON: Icon = RIGHT_CHECK;
+#[cfg(target_os = "nanos")]
+pub const DASHBOARD_ICON: Icon = RIGHT_CHECK;
+#[cfg(target_os = "nanos")]
+pub const SETTINGS_ICON: Icon = RIGHT_CHECK;
+
+#[cfg(not(target_os = "nanos"))]
+pub const BACK_ICON: Icon = Icon::from(&bitmaps::BACK_GLYPH).set_x(55).shift_v(-10);
+#[cfg(not(target_os = "nanos"))]
+pub const DASHBOARD_ICON: Icon = Icon::from(&bitmaps::DASHBOARD_GLYPH).set_x(55).shift_v(-10);
+#[cfg(not(target_os = "nanos"))]
+pub const SETTINGS_ICON: Icon = Icon::from(&bitmaps::SETTINGS_GLYPH).set_x(55).shift_v(-10);
+
+pub enum MenuLabelTop<'a> {
+    #[cfg(target_os = "nanos")]
+    Icon(&'a Icon),
+    #[cfg(not(target_os = "nanos"))]
+    Icon(&'a Icon<'a>),
+    Text(&'a str),
+}
+
+pub struct MenuLabelBottom<'a> {
+    pub text: &'a str,
+    pub bold: bool,
+}
+
 pub trait Menu {
     type BothResult;
     fn move_left(&mut self);
     fn move_right(&mut self);
     fn handle_both(&mut self) -> Option<Self::BothResult>;
-    fn label(&self) -> &str;
+    fn label<'a>(&self) -> (MenuLabelTop<'a>, MenuLabelBottom<'a>);
 }
 
 #[inline(never)]
 pub fn show_menu<M: Menu>(menu: &M) {
-    SingleMessage::new(menu.label()).show();
+    clear_screen();
+    let (top, bottom) = menu.label();
+    match top {
+        MenuLabelTop::Icon(icon) => {
+            // TODO: render icon in nanos also
+            #[cfg(not(target_os = "nanos"))]
+            icon.instant_display()
+        }
+        MenuLabelTop::Text(txt) => {
+            #[cfg(target_os = "nanos")]
+            txt.place(Location::Top, Layout::Centered, true);
+            #[cfg(not(target_os = "nanos"))]
+            txt.place(Location::Custom(15), Layout::Centered, true);
+        }
+    }
+    #[cfg(target_os = "nanos")]
+    bottom
+        .text
+        .place(Location::Custom(15), Layout::Centered, bottom.bold);
+    #[cfg(not(target_os = "nanos"))]
+    bottom
+        .text
+        .place(Location::Custom(35), Layout::Centered, bottom.bold);
+
+    // Always show Left and Right arrows, as the menu can wrap
+    LEFT_ARROW.instant_display();
+    RIGHT_ARROW.instant_display();
 }
 
 #[inline(never)]
-pub fn handle_menu_button_event<M: Menu>(menu: &mut M, btn: ButtonEvent) -> Option<<M as Menu>::BothResult> {
+pub fn handle_menu_button_event<M: Menu>(
+    menu: &mut M,
+    btn: ButtonEvent,
+) -> Option<<M as Menu>::BothResult> {
     match btn {
         ButtonEvent::LeftButtonRelease => {
             menu.move_left();
@@ -408,9 +465,7 @@ pub fn handle_menu_button_event<M: Menu>(menu: &mut M, btn: ButtonEvent) -> Opti
         ButtonEvent::RightButtonRelease => {
             menu.move_right();
         }
-        ButtonEvent::BothButtonsRelease => {
-            return menu.handle_both()
-        },
+        ButtonEvent::BothButtonsRelease => return menu.handle_both(),
         _ => (),
     }
     None
