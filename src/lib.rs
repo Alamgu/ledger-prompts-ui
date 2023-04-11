@@ -8,7 +8,7 @@ use ledger_log::trace;
 use nanos_sdk::buttons::{ButtonEvent, ButtonsState};
 use nanos_ui::bagls::*;
 use nanos_ui::layout::*;
-use nanos_ui::ui::{clear_screen, get_event, MessageValidator, SingleMessage};
+use nanos_ui::ui::{clear_screen, get_event, MessageValidator};
 
 pub mod bitmaps;
 
@@ -114,12 +114,7 @@ pub struct WriteScroller<
     contents: F,
 }
 
-#[cfg(target_os = "nanos")]
-const RIGHT_CHECK: Icon = Icon::new(Icons::Check).pos(120, 12);
-
-#[cfg(not(target_os = "nanos"))]
 const CHECK_ICON: Icon = Icon::from(&bitmaps::CHECK_GLYPH);
-#[cfg(not(target_os = "nanos"))]
 const RIGHT_CHECK: Icon = CHECK_ICON.shift_h(120);
 
 impl<
@@ -386,25 +381,23 @@ impl<
     }
 }
 
-// TODO: Fix nanos icons
+pub const MENU_ICON_X: i16 = 55;
 #[cfg(target_os = "nanos")]
-pub const BACK_ICON: Icon = RIGHT_CHECK;
-#[cfg(target_os = "nanos")]
-pub const DASHBOARD_ICON: Icon = RIGHT_CHECK;
-#[cfg(target_os = "nanos")]
-pub const SETTINGS_ICON: Icon = RIGHT_CHECK;
+pub const MENU_ICON_Y: i16 = 2;
+#[cfg(not(target_os = "nanos"))]
+pub const MENU_ICON_Y: i16 = 15;
 
-#[cfg(not(target_os = "nanos"))]
-pub const BACK_ICON: Icon = Icon::from(&bitmaps::BACK_GLYPH).set_x(55).shift_v(-10);
-#[cfg(not(target_os = "nanos"))]
-pub const DASHBOARD_ICON: Icon = Icon::from(&bitmaps::DASHBOARD_GLYPH).set_x(55).shift_v(-10);
-#[cfg(not(target_os = "nanos"))]
-pub const SETTINGS_ICON: Icon = Icon::from(&bitmaps::SETTINGS_GLYPH).set_x(55).shift_v(-10);
+pub const BACK_ICON: Icon = Icon::from(&bitmaps::BACK_GLYPH)
+    .set_x(MENU_ICON_X)
+    .set_y(MENU_ICON_Y);
+pub const DASHBOARD_ICON: Icon = Icon::from(&bitmaps::DASHBOARD_GLYPH)
+    .set_x(MENU_ICON_X)
+    .set_y(MENU_ICON_Y);
+pub const SETTINGS_ICON: Icon = Icon::from(&bitmaps::SETTINGS_GLYPH)
+    .set_x(MENU_ICON_X)
+    .set_y(MENU_ICON_Y);
 
 pub enum MenuLabelTop<'a> {
-    #[cfg(target_os = "nanos")]
-    Icon(&'a Icon),
-    #[cfg(not(target_os = "nanos"))]
     Icon(&'a Icon<'a>),
     Text(&'a str),
 }
@@ -427,11 +420,7 @@ pub fn show_menu<M: Menu>(menu: &M) {
     clear_screen();
     let (top, bottom) = menu.label();
     match top {
-        MenuLabelTop::Icon(icon) => {
-            // TODO: render icon in nanos also
-            #[cfg(not(target_os = "nanos"))]
-            icon.instant_display()
-        }
+        MenuLabelTop::Icon(icon) => icon.instant_display(),
         MenuLabelTop::Text(txt) => {
             #[cfg(target_os = "nanos")]
             txt.place(Location::Top, Layout::Centered, true);
