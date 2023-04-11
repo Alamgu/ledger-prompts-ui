@@ -387,6 +387,16 @@ pub const MENU_ICON_Y: i16 = 2;
 #[cfg(not(target_os = "nanos"))]
 pub const MENU_ICON_Y: i16 = 15;
 
+#[cfg(target_os = "nanos")]
+pub const MENU_TOP_TEXT_Y: usize = 0;
+#[cfg(not(target_os = "nanos"))]
+pub const MENU_TOP_TEXT_Y: usize = 15;
+
+#[cfg(target_os = "nanos")]
+pub const MENU_BOTTOM_TEXT_Y: usize = 15;
+#[cfg(not(target_os = "nanos"))]
+pub const MENU_BOTTOM_TEXT_Y: usize = 35;
+
 pub const BACK_ICON: Icon = Icon::from(&bitmaps::BACK_GLYPH)
     .set_x(MENU_ICON_X)
     .set_y(MENU_ICON_Y);
@@ -422,20 +432,14 @@ pub fn show_menu<M: Menu>(menu: &M) {
     match top {
         MenuLabelTop::Icon(icon) => icon.instant_display(),
         MenuLabelTop::Text(txt) => {
-            #[cfg(target_os = "nanos")]
-            txt.place(Location::Top, Layout::Centered, true);
-            #[cfg(not(target_os = "nanos"))]
-            txt.place(Location::Custom(15), Layout::Centered, true);
+            txt.place(Location::Custom(MENU_TOP_TEXT_Y), Layout::Centered, true);
         }
     }
-    #[cfg(target_os = "nanos")]
-    bottom
-        .text
-        .place(Location::Custom(15), Layout::Centered, bottom.bold);
-    #[cfg(not(target_os = "nanos"))]
-    bottom
-        .text
-        .place(Location::Custom(35), Layout::Centered, bottom.bold);
+    bottom.text.place(
+        Location::Custom(MENU_BOTTOM_TEXT_Y),
+        Layout::Centered,
+        bottom.bold,
+    );
 
     // Always show Left and Right arrows, as the menu can wrap
     LEFT_ARROW.instant_display();
