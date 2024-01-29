@@ -5,10 +5,10 @@
 use arrayvec::ArrayString;
 use core::fmt::Write;
 use ledger_log::trace;
-use nanos_sdk::buttons::{ButtonEvent, ButtonsState};
-use nanos_ui::bagls::*;
-use nanos_ui::layout::*;
-use nanos_ui::ui::{clear_screen, get_event, MessageValidator};
+use ledger_device_sdk::buttons::{ButtonEvent, ButtonsState};
+use ledger_device_sdk::ui::bagls::*;
+use ledger_device_sdk::ui::layout::*;
+use ledger_device_sdk::ui::gadgets::{clear_screen, get_event, MessageValidator};
 
 pub mod bitmaps;
 

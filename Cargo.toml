@@ -5,14 +5,9 @@ edition = "2018"
 
 [dependencies]
 arrayvec = { version = "0.7.1", default-features = false }
-nanos_sdk = { git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git" }
-nanos_ui = { git = "https://github.com/LedgerHQ/ledger-nanos-ui.git" }
+ledger_device_sdk = "1.4.3"
 ledger-log = { git = "https://github.com/alamgu/ledger-log.git" }
-include_gif = { git = "https://github.com/LedgerHQ/sdk_include_gif" }
+include_gif = "1.0.1"
 
 [features]
-speculos = ["nanos_sdk/speculos"]
-
-[patch."https://github.com/LedgerHQ/ledger-nanos-sdk.git".nanos_sdk]
-git = "https://github.com/alamgu/ledger-nanos-sdk.git"
-branch = "support-nix-or-non-nix-toolchain"
+speculos = ["ledger_device_sdk/speculos"]

@@ -1,5 +1,5 @@
 use include_gif::include_gif;
-use nanos_ui::bitmaps::Glyph;
+use ledger_device_sdk::ui::bitmaps::Glyph;
 
 pub const CHECK_GLYPH: Glyph = Glyph::from_include(include_gif!("icons/check.gif"));
 pub const BACK_GLYPH: Glyph = Glyph::from_include(include_gif!("icons/back.gif"));
