@@ -47,7 +47,7 @@ impl<'a, const N: usize> Write for PromptWrite<'a, N> {
 }
 
 pub fn final_accept_prompt(prompt: &[&str]) -> Option<()> {
-    if !MessageValidator::new(prompt, &[&"Confirm"], &[&"Reject"]).ask() {
+    if !MessageValidator::new(prompt, &[&"Approve"], &[&"Reject"]).ask() {
         trace!("User rejected at end\n");
         None
     } else {
